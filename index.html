@@ -170,6 +170,16 @@
           席割りを実行 →
         </button>
       </div>
+
+      <!-- Loading overlay -->
+      <div id="loading-overlay" class="hidden fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-5">
+        <div class="flex gap-2">
+          <span class="w-3 h-3 rounded-full bg-indigo-500 animate-bounce" style="animation-delay:0s"></span>
+          <span class="w-3 h-3 rounded-full bg-indigo-400 animate-bounce" style="animation-delay:.15s"></span>
+          <span class="w-3 h-3 rounded-full bg-indigo-300 animate-bounce" style="animation-delay:.3s"></span>
+        </div>
+        <p id="loading-msg" class="text-gray-600 font-medium text-sm"></p>
+      </div>
     </div>
 
     <!-- ========== Step 3: Results ========== -->
@@ -826,18 +836,48 @@
     r1.readAsText(file, 'UTF-8');
   }
 
+  const LOADING_MSGS = [
+    '名簿を解析しています…',
+    'テーブルリーダーを配置中…',
+    '世話人の席を調整中…',
+    '第1ラウンドを最適化中…',
+    '第2ラウンドの多様性を計算中…',
+    '席割りを確定しています…',
+  ];
+
   function runAssignment() {
-    try {
-      state.round1    = assignRound1(state.persons);
-      state.round2    = assignRound2(state.persons, state.round1);
-      state.activeTab = 1;
-      document.getElementById('tab-btn-1').className = 'px-4 py-2 rounded-lg text-sm font-semibold transition-colors bg-indigo-600 text-white';
-      document.getElementById('tab-btn-2').className = 'px-4 py-2 rounded-lg text-sm font-semibold transition-colors text-gray-600 hover:bg-gray-50';
-      renderResults();
-      showStep(3);
-    } catch (err) {
-      alert('席割りエラー: ' + err.message);
-    }
+    const btn = document.getElementById('run-btn');
+    const overlay = document.getElementById('loading-overlay');
+    const msg = document.getElementById('loading-msg');
+    btn.disabled = true;
+
+    let i = 0;
+    msg.textContent = LOADING_MSGS[0];
+    overlay.classList.remove('hidden');
+
+    const tick = setInterval(() => {
+      i++;
+      if (i < LOADING_MSGS.length) msg.textContent = LOADING_MSGS[i];
+    }, 220);
+
+    setTimeout(() => {
+      clearInterval(tick);
+      try {
+        state.round1    = assignRound1(state.persons);
+        state.round2    = assignRound2(state.persons, state.round1);
+        state.activeTab = 1;
+        document.getElementById('tab-btn-1').className = 'px-4 py-2 rounded-lg text-sm font-semibold transition-colors bg-indigo-600 text-white';
+        document.getElementById('tab-btn-2').className = 'px-4 py-2 rounded-lg text-sm font-semibold transition-colors text-gray-600 hover:bg-gray-50';
+        renderResults();
+        overlay.classList.add('hidden');
+        btn.disabled = false;
+        showStep(3);
+      } catch (err) {
+        overlay.classList.add('hidden');
+        btn.disabled = false;
+        alert('席割りエラー: ' + err.message);
+      }
+    }, 1400);
   }
 
   function reshuffle() {
