@@ -574,10 +574,11 @@
     return _gyoshuColorCache[g];
   }
 
-  function gyoshuBadge(g) {
+  function gyoshuBadge(g, full = false) {
     if (!g) return '';
     const c = gyoshuColor(g);
-    return `<span style="background:${c}22;color:${c};padding:1px 7px;border-radius:9999px;font-size:0.7rem;font-weight:600;white-space:nowrap">${esc(g)}</span>`;
+    const label = (!full && g.length > 12) ? g.slice(0, 12) + '…' : g;
+    return `<span title="${esc(g)}" style="background:${c}22;color:${c};padding:1px 7px;border-radius:9999px;font-size:0.7rem;font-weight:600;white-space:nowrap;cursor:default">${esc(label)}</span>`;
   }
 
   function generateTableComment(table) {
@@ -799,10 +800,7 @@
               <span class="flex-1 text-sm ${m.isLeader ? 'font-bold text-gray-800' : 'text-gray-700'}">
                 ${esc(m.name)}${m.role === 'ゲスト' && m.referrer ? `<span class="text-xs text-gray-400 ml-1">(紹介: ${esc(m.referrer)})</span>` : ''}
               </span>
-              <div class="flex items-center gap-1.5">
-                ${m.gyoshu ? gyoshuBadge(m.gyoshu) : ''}
-                <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${ROLE_BADGE[m.role] || ''}">${esc(m.role)}</span>
-              </div>
+              <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${ROLE_BADGE[m.role] || ''}">${esc(m.role)}</span>
             </li>`).join('')}
         </ul>
       </div>`;
