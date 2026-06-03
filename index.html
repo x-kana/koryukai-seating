@@ -552,38 +552,30 @@
     const gyoshus = table.members.map(m => m.gyoshu).filter(Boolean);
     if (!gyoshus.length) return null;
     const unique = [...new Set(gyoshus)];
-
-    // キーワードで潜在的なマッチング文脈を検出
     const all = unique.join(' ');
-    const hasIT  = /IT|システム|web|Web|ソフト|デジタル|アプリ/.test(all);
-    const hasMfg = /製造|メーカー|工場|ものづくり/.test(all);
-    const hasFnB = /飲食|食品|料理|カフェ|レストラン/.test(all);
+
+    if (unique.length === 1)
+      return '同業者が揃うテーブル。深い情報交換や横のつながりが生まれやすい席です。';
+
+    const hasIT    = /IT|システム|web|Web|ソフト|デジタル|アプリ/.test(all);
+    const hasMfg   = /製造|メーカー|工場|ものづくり/.test(all);
     const hasSales = /小売|販売|EC|ショップ|流通/.test(all);
-    const hasCon = /建設|不動産|リフォーム|土木/.test(all);
-    const hasFin = /金融|保険|融資|銀行|証券/.test(all);
-    const hasCare = /介護|医療|福祉|健康|クリニック/.test(all);
-    const hasBeauty = /美容|サロン|エステ|ヘア/.test(all);
+    const hasCon   = /建設|不動産|リフォーム|土木/.test(all);
+    const hasFin   = /金融|保険|融資|銀行|証券/.test(all);
+    const hasFnB   = /飲食|食品|料理|カフェ|レストラン/.test(all);
+    const hasCare  = /介護|医療|福祉|健康|クリニック/.test(all);
 
-    let hint = '';
-    if (hasIT && hasMfg)   hint = 'DX・業務効率化の話題が弾みそうなテーブル。';
-    else if (hasIT && hasSales) hint = 'EC・デジタルマーケの接点から新たな集客戦略が生まれそうなテーブル。';
-    else if (hasIT && hasCare) hint = '医療・介護DXの可能性を語り合えるテーブル。';
-    else if (hasCon && hasFin) hint = '物件・資金調達の話題で盛り上がりそうなテーブル。';
-    else if (hasFnB && hasSales) hint = '食の仕入れから販路まで、川上・川下の視点が揃うテーブル。';
-    else if (hasBeauty && hasIT) hint = 'SNS活用・予約システムなどデジタル集客の話題が生まれそう。';
+    if (hasIT && hasMfg)   return '現場の課題とデジタル技術が交わるテーブル。DXの具体策が話題になりそうです。';
+    if (hasIT && hasSales) return 'デジタルと販売の接点が豊富なテーブル。集客・マーケの話で盛り上がりそうです。';
+    if (hasIT && hasCare)  return 'テクノロジーと現場ケアが出会うテーブル。業務改善のヒントが生まれやすい席です。';
+    if (hasCon && hasFin)  return '物件と資金の両面から語れるテーブル。不動産系の商談につながりやすい席です。';
+    if (hasFnB && hasSales) return '食の仕入れから販路まで話せるテーブル。川上と川下をつなぐ議論が生まれそうです。';
 
-    const preview = unique.slice(0, 3).join('・');
-    const extra = unique.length > 3 ? `など${unique.length}業種` : '';
+    const ratio = unique.length / gyoshus.length;
+    if (ratio >= 0.75)
+      return 'バラエティ豊かな顔ぶれ。異業種ならではの気づきと新たな接点が生まれやすいテーブルです。';
 
-    if (unique.length === 1) {
-      return `${unique[0]}が中心のテーブル。同業ならではの深い情報交換・横連携が期待できます。`;
-    }
-    if (unique.length === 2) {
-      return hint || `${unique[0]}×${unique[1]}の掛け合わせ。業界の壁を越えたコラボのヒントが生まれそうです。`;
-    }
-    return hint
-      ? `${preview}${extra}が集結。${hint}`
-      : `${preview}${extra}が集まるテーブル。多様な視点から新たなビジネスの種を見つけましょう。`;
+    return '多彩な顔ぶれが揃うテーブル。それぞれの強みを持ち寄り、新たなビジネスの種を見つけましょう。';
   }
 
   // ================================================================
@@ -752,22 +744,21 @@
           </div>
           <span class="text-xs text-gray-400">${t.members.length} / 8 名</span>
         </div>
-        ${gyoshusUniq.length ? `
-        <div class="px-4 pt-2.5 pb-1 flex flex-wrap gap-1">
-          ${gyoshusUniq.map(g => gyoshuBadge(g)).join('')}
-        </div>` : ''}
         ${comment ? `
-        <div class="px-4 pb-2 pt-1">
-          <p class="text-xs text-gray-500 leading-relaxed">${esc(comment)}</p>
+        <div class="px-4 py-2 border-b border-gray-50">
+          <p class="text-xs text-gray-400 leading-relaxed">${esc(comment)}</p>
         </div>` : ''}
         <ul class="divide-y divide-gray-50 border-t border-gray-50">
           ${t.members.map(m => `
             <li class="flex items-center gap-2 px-4 py-2.5">
               <span class="w-4 text-center text-xs font-bold ${m.isLeader ? 'text-amber-400' : 'text-gray-200'}">${m.isLeader ? '★' : '·'}</span>
-              <span class="flex-1 text-sm ${m.isLeader ? 'font-bold text-gray-800' : 'text-gray-700'}">
-                ${esc(m.name)}${m.role === 'ゲスト' && m.referrer ? `<span class="text-xs text-gray-400 ml-1">(紹介: ${esc(m.referrer)})</span>` : ''}
+              <span class="flex-1 min-w-0">
+                <span class="block text-sm ${m.isLeader ? 'font-bold text-gray-800' : 'text-gray-700'}">
+                  ${esc(m.name)}${m.role === 'ゲスト' && m.referrer ? `<span class="text-xs text-gray-400 ml-1">(紹介: ${esc(m.referrer)})</span>` : ''}
+                </span>
+                ${m.gyoshu ? `<span class="block text-xs text-gray-400 truncate" title="${esc(m.gyoshu)}">${esc(m.gyoshu.length > 20 ? m.gyoshu.slice(0, 20) + '…' : m.gyoshu)}</span>` : ''}
               </span>
-              <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${ROLE_BADGE[m.role] || ''}">${esc(m.role)}</span>
+              <span class="px-2 py-0.5 rounded-full text-xs font-semibold shrink-0 ${ROLE_BADGE[m.role] || ''}">${esc(m.role)}</span>
             </li>`).join('')}
         </ul>
       </div>`;
