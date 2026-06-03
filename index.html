@@ -76,6 +76,7 @@
                   <tr><td class="py-1.5 pr-3 font-medium">資格列</td><td class="py-1.5">正会員・準会員・世話人・ゲストをそのまま使用。代表/副代表/会計/事務局は世話人として扱います</td></tr>
                   <tr><td class="py-1.5 pr-3 font-medium">会場名列</td><td class="py-1.5">最多会場名をホーム会場と判定。それ以外の会場の正会員・準会員・世話人は「他会場所属」として扱います</td></tr>
                   <tr><td class="py-1.5 pr-3 font-medium">紹介者列</td><td class="py-1.5">資格がゲストの行のみ使用</td></tr>
+                  <tr><td class="py-1.5 pr-3 font-medium">業種・職種列</td><td class="py-1.5">任意。記入するとビジネスマッチングを考慮した席配置とテーブルコメントが生成されます</td></tr>
                 </tbody>
               </table>
             </div>
@@ -86,8 +87,8 @@
                 <span class="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-bold rounded">B</span>
                 <span class="text-xs font-semibold text-gray-700">シンプル形式（4列）</span>
               </div>
-              <code class="block bg-gray-50 rounded-lg p-2 text-xs text-gray-700 font-mono">名前,区分,テーブルリーダー,紹介者</code>
-              <p class="text-xs text-gray-500 mt-1">区分: 世話人 / 正会員 / 準会員 / ゲスト / 他会場所属　／　テーブルリーダー: ○ または空欄</p>
+              <code class="block bg-gray-50 rounded-lg p-2 text-xs text-gray-700 font-mono">名前,区分,テーブルリーダー,紹介者,業種</code>
+              <p class="text-xs text-gray-500 mt-1">区分: 世話人 / 正会員 / 準会員 / ゲスト / 他会場所属　／　テーブルリーダー: ○ または空欄　／　業種: 任意（例: IT・製造業・飲食）</p>
             </div>
 
             <div class="bg-blue-50 rounded-lg p-3 text-xs text-blue-700">
@@ -153,6 +154,7 @@
                 <th class="px-4 py-2.5 font-medium">名前</th>
                 <th class="px-4 py-2.5 font-medium">区分</th>
                 <th class="px-4 py-2.5 font-medium text-center w-16">リーダー</th>
+                <th class="px-4 py-2.5 font-medium">業種</th>
                 <th class="px-4 py-2.5 font-medium">紹介者</th>
               </tr>
             </thead>
@@ -213,6 +215,40 @@
 
       <!-- Table grid -->
       <div id="table-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+
+      <!-- Ideas panel -->
+      <div class="mt-8 border-t border-gray-100 pt-6">
+        <button onclick="toggleIdeas()" class="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-gray-800 mb-4">
+          <span id="ideas-arrow" class="text-gray-400 transition-transform duration-200">▶</span>
+          場を盛り上げるアイデア
+        </button>
+        <div id="ideas-body" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="bg-amber-50 border border-amber-100 rounded-xl p-4">
+            <div class="font-semibold text-amber-800 text-sm mb-1">名刺交換ミッション</div>
+            <p class="text-xs text-amber-700 leading-relaxed">第1ラウンド開始時に「このラウンドで絶対フォローしたい人を1人見つける」をミッションとして宣言。終了時に全員が名前を挙げる。第2ラウンドへの期待感が高まります。</p>
+          </div>
+          <div class="bg-sky-50 border border-sky-100 rounded-xl p-4">
+            <div class="font-semibold text-sky-800 text-sm mb-1">テーブルミッションカード</div>
+            <p class="text-xs text-sky-700 leading-relaxed">各テーブルに1枚カードを置き「5分以内に全員の業種を把握して、2人の間にある共通点を1つ見つけよう」というチャレンジを出す。会話の糸口になります。</p>
+          </div>
+          <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
+            <div class="font-semibold text-emerald-800 text-sm mb-1">マッチングメモシート</div>
+            <p class="text-xs text-emerald-700 leading-relaxed">A5 1枚の「今日の出会いメモ」を配布。「名前・業種・話した内容・フォローしたいこと」を記入欄として用意。帰宅後の行動につながります。</p>
+          </div>
+          <div class="bg-violet-50 border border-violet-100 rounded-xl p-4">
+            <div class="font-semibold text-violet-800 text-sm mb-1">自己紹介カード（席置き）</div>
+            <p class="text-xs text-violet-700 leading-relaxed">名前・業種に加えて「今探していること」「提供できること」を書いた小カードを席に置く。着席直後から会話が始まりやすくなります。</p>
+          </div>
+          <div class="bg-rose-50 border border-rose-100 rounded-xl p-4">
+            <div class="font-semibold text-rose-800 text-sm mb-1">ラウンド間 30 秒タイム</div>
+            <p class="text-xs text-rose-700 leading-relaxed">席替えの前に「第1ラウンドで一番印象に残った話を30秒でシェアして！」と促す。第2ラウンドへの橋渡しになり、場の熱量が下がりません。</p>
+          </div>
+          <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
+            <div class="font-semibold text-indigo-800 text-sm mb-1">業種タグ名札</div>
+            <p class="text-xs text-indigo-700 leading-relaxed">名札に業種を大きく印刷（例: 「IT・田中」）。遠くからでも一目で分かり、席移動のタイミングで声をかけやすくなります。</p>
+          </div>
+        </div>
+      </div>
     </div>
 
   </main>
@@ -243,31 +279,31 @@
 
   const ROLE_WEIGHT = { '正会員': 3, '準会員': 2, '他会場所属': 1, '世話人': 0, 'ゲスト': 0 };
 
-  const SAMPLE_CSV = `名前,区分,テーブルリーダー,紹介者
-田中 花子,正会員,○,
-鈴木 一郎,正会員,○,
-佐藤 美穂,正会員,○,
-山田 太郎,世話人,,
-伊藤 次郎,世話人,,
-渡辺 三郎,世話人,,
-中村 さくら,正会員,,
-小林 健太,正会員,,
-加藤 麻衣,正会員,,
-吉田 大輔,準会員,,
-田中 純子,準会員,,
-鈴木 浩二,準会員,,
-山本 恵子,準会員,,
-中島 隆,準会員,,
-高橋 知子,準会員,,
-ゲスト A,ゲスト,,田中 花子
-ゲスト B,ゲスト,,鈴木 一郎
-ゲスト C,ゲスト,,佐藤 美穂
-木村 誠,他会場所属,,
-阿部 雅子,他会場所属,,
-松本 直樹,他会場所属,,
-岡田 幸子,他会場所属,,
-橋本 守,他会場所属,,
-藤田 真由美,他会場所属,,`;
+  const SAMPLE_CSV = `名前,区分,テーブルリーダー,紹介者,業種
+田中 花子,正会員,○,,IT・システム
+鈴木 一郎,正会員,○,,製造業
+佐藤 美穂,正会員,○,,飲食・食品
+山田 太郎,世話人,,,不動産
+伊藤 次郎,世話人,,,建設業
+渡辺 三郎,世話人,,,小売・販売
+中村 さくら,正会員,,,IT・システム
+小林 健太,正会員,,,医療・介護
+加藤 麻衣,正会員,,,製造業
+吉田 大輔,準会員,,,飲食・食品
+田中 純子,準会員,,,美容・サロン
+鈴木 浩二,準会員,,,建設業
+山本 恵子,準会員,,,小売・販売
+中島 隆,準会員,,,IT・システム
+高橋 知子,準会員,,,不動産
+ゲスト A,ゲスト,,田中 花子,IT・システム
+ゲスト B,ゲスト,,鈴木 一郎,製造業
+ゲスト C,ゲスト,,佐藤 美穂,飲食・食品
+木村 誠,他会場所属,,,物流・運送
+阿部 雅子,他会場所属,,,美容・サロン
+松本 直樹,他会場所属,,,金融・保険
+岡田 幸子,他会場所属,,,教育・研修
+橋本 守,他会場所属,,,小売・販売
+藤田 真由美,他会場所属,,,建設業`;
 
   // ================================================================
   // State
@@ -330,6 +366,7 @@
       const col = name => hdr.indexOf(name);
       const iName = col('氏名'), iTL = col('TL'), iRole = col('資格');
       const iRef = col('紹介者'), iVenue = col('会場名');
+      const iGyoshu = col('業種') !== -1 ? col('業種') : col('職種');
 
       // ホーム会場を最多会場名で自動検出
       const venueCnt = {};
@@ -365,12 +402,14 @@
 
         const isHomeVenue = !homeVenue || !venue || venue === '-' || venue === homeVenue;
         const fixedTable = (rawRole === '代表' && isHomeVenue) ? 3 : null;
+        const gyoshu = iGyoshu !== -1 ? (r[iGyoshu] || '').trim() : '';
         persons.push({
           name,
           role,
           isLeader,
           referrer: (rawRole === 'ゲスト' && ref) ? ref : null,
           fixedTable,
+          gyoshu: gyoshu || null,
           _rawRole: rawRole,
           _venue: venue,
         });
@@ -385,10 +424,11 @@
       const nameSet = new Set();
       for (let i = 0; i < dataRows.length; i++) {
         const r = dataRows[i], rn = i + 2;
-        const name = (r[0] || '').trim();
-        const role = (r[1] || '').trim();
-        const ldr  = (r[2] || '').trim();
-        const ref  = (r[3] || '').trim();
+        const name    = (r[0] || '').trim();
+        const role    = (r[1] || '').trim();
+        const ldr     = (r[2] || '').trim();
+        const ref     = (r[3] || '').trim();
+        const gyoshu  = (r[4] || '').trim();
 
         if (!name) { errors.push(`${rn}行目: 名前が空です`); continue; }
         if (nameSet.has(name)) errors.push(`${rn}行目: 名前「${name}」が重複しています`);
@@ -405,7 +445,7 @@
         if (role === 'ゲスト' && !ref)
           errors.push(`${rn}行目: ゲスト「${name}」に紹介者が未記入です`);
 
-        persons.push({ name, role, isLeader, referrer: ref || null });
+        persons.push({ name, role, isLeader, referrer: ref || null, gyoshu: gyoshu || null });
       }
     }
 
@@ -474,12 +514,21 @@
     return score;
   }
 
+  // 同業種が同テーブルにいる数（多いほど悪い）
+  function gyoshuSameCount(table, person) {
+    if (!person.gyoshu) return 0;
+    return table.members.filter(m => m.gyoshu && m.gyoshu === person.gyoshu).length;
+  }
+
   function bestByImbalance(tables, person) {
     const eligible = tables.filter(t => t.members.length < 8);
     if (!eligible.length) return leastFull(tables);
-    return eligible.reduce((best, t) =>
-      imbalanceScore(tables, t, person) < imbalanceScore(tables, best, person) ? t : best
-    );
+    const GW = 1.5;
+    return eligible.reduce((best, t) => {
+      const sT = imbalanceScore(tables, t, person) + gyoshuSameCount(t, person) * GW;
+      const sB = imbalanceScore(tables, best, person) + gyoshuSameCount(best, person) * GW;
+      return sT < sB ? t : best;
+    });
   }
 
   function buildNeighborMap(tables) {
@@ -501,12 +550,72 @@
   function bestByDiversity(tables, person, nbMap) {
     const eligible = tables.filter(t => t.members.length < 8);
     if (!eligible.length) return leastFull(tables);
-    const OW = 2.0, IW = 1.0;
+    const OW = 2.0, IW = 1.0, GW = 1.5;
     return eligible.reduce((best, t) => {
-      const sT = overlapScore(t, person, nbMap) * OW + imbalanceScore(tables, t, person) * IW;
-      const sB = overlapScore(best, person, nbMap) * OW + imbalanceScore(tables, best, person) * IW;
+      const sT = overlapScore(t, person, nbMap) * OW + imbalanceScore(tables, t, person) * IW + gyoshuSameCount(t, person) * GW;
+      const sB = overlapScore(best, person, nbMap) * OW + imbalanceScore(tables, best, person) * IW + gyoshuSameCount(best, person) * GW;
       return sT < sB ? t : best;
     });
+  }
+
+  // ================================================================
+  // Business Matching — コメント & カラー
+  // ================================================================
+  const GYOSHU_PALETTE = [
+    '#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6',
+    '#06b6d4','#84cc16','#f97316','#ec4899','#6366f1',
+    '#14b8a6','#a855f7','#f43f5e','#0ea5e9','#22c55e',
+  ];
+  const _gyoshuColorCache = {};
+  let _gyoshuColorIdx = 0;
+  function gyoshuColor(g) {
+    if (!g) return null;
+    if (!_gyoshuColorCache[g]) _gyoshuColorCache[g] = GYOSHU_PALETTE[_gyoshuColorIdx++ % GYOSHU_PALETTE.length];
+    return _gyoshuColorCache[g];
+  }
+
+  function gyoshuBadge(g) {
+    if (!g) return '';
+    const c = gyoshuColor(g);
+    return `<span style="background:${c}22;color:${c};padding:1px 7px;border-radius:9999px;font-size:0.7rem;font-weight:600;white-space:nowrap">${esc(g)}</span>`;
+  }
+
+  function generateTableComment(table) {
+    const gyoshus = table.members.map(m => m.gyoshu).filter(Boolean);
+    if (!gyoshus.length) return null;
+    const unique = [...new Set(gyoshus)];
+
+    // キーワードで潜在的なマッチング文脈を検出
+    const all = unique.join(' ');
+    const hasIT  = /IT|システム|web|Web|ソフト|デジタル|アプリ/.test(all);
+    const hasMfg = /製造|メーカー|工場|ものづくり/.test(all);
+    const hasFnB = /飲食|食品|料理|カフェ|レストラン/.test(all);
+    const hasSales = /小売|販売|EC|ショップ|流通/.test(all);
+    const hasCon = /建設|不動産|リフォーム|土木/.test(all);
+    const hasFin = /金融|保険|融資|銀行|証券/.test(all);
+    const hasCare = /介護|医療|福祉|健康|クリニック/.test(all);
+    const hasBeauty = /美容|サロン|エステ|ヘア/.test(all);
+
+    let hint = '';
+    if (hasIT && hasMfg)   hint = 'DX・業務効率化の話題が弾みそうなテーブル。';
+    else if (hasIT && hasSales) hint = 'EC・デジタルマーケの接点から新たな集客戦略が生まれそうなテーブル。';
+    else if (hasIT && hasCare) hint = '医療・介護DXの可能性を語り合えるテーブル。';
+    else if (hasCon && hasFin) hint = '物件・資金調達の話題で盛り上がりそうなテーブル。';
+    else if (hasFnB && hasSales) hint = '食の仕入れから販路まで、川上・川下の視点が揃うテーブル。';
+    else if (hasBeauty && hasIT) hint = 'SNS活用・予約システムなどデジタル集客の話題が生まれそう。';
+
+    const preview = unique.slice(0, 3).join('・');
+    const extra = unique.length > 3 ? `など${unique.length}業種` : '';
+
+    if (unique.length === 1) {
+      return `${unique[0]}が中心のテーブル。同業ならではの深い情報交換・横連携が期待できます。`;
+    }
+    if (unique.length === 2) {
+      return hint || `${unique[0]}×${unique[1]}の掛け合わせ。業界の壁を越えたコラボのヒントが生まれそうです。`;
+    }
+    return hint
+      ? `${preview}${extra}が集結。${hint}`
+      : `${preview}${extra}が集まるテーブル。多様な視点から新たなビジネスの種を見つけましょう。`;
   }
 
   // ================================================================
@@ -657,12 +766,16 @@
           <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${ROLE_BADGE[p.role] || 'bg-gray-100 text-gray-600'}">${esc(p.role)}</span>
         </td>
         <td class="px-4 py-2 text-center text-amber-400 font-bold text-sm">${p.isLeader ? '★' : ''}</td>
+        <td class="px-4 py-2">${p.gyoshu ? gyoshuBadge(p.gyoshu) : ''}</td>
         <td class="px-4 py-2 text-xs text-gray-500">${p.referrer ? esc(p.referrer) : ''}</td>
       </tr>`).join('');
   }
 
   function renderTables(tables) {
-    document.getElementById('table-grid').innerHTML = tables.map(t => `
+    document.getElementById('table-grid').innerHTML = tables.map(t => {
+      const comment = generateTableComment(t);
+      const gyoshusUniq = [...new Set(t.members.map(m => m.gyoshu).filter(Boolean))];
+      return `
       <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="flex items-center justify-between px-4 py-3 bg-indigo-50 border-b border-indigo-100">
           <div class="flex items-center gap-2">
@@ -671,17 +784,29 @@
           </div>
           <span class="text-xs text-gray-400">${t.members.length} / 8 名</span>
         </div>
-        <ul class="divide-y divide-gray-50">
+        ${gyoshusUniq.length ? `
+        <div class="px-4 pt-2.5 pb-1 flex flex-wrap gap-1">
+          ${gyoshusUniq.map(g => gyoshuBadge(g)).join('')}
+        </div>` : ''}
+        ${comment ? `
+        <div class="px-4 pb-2 pt-1">
+          <p class="text-xs text-gray-500 leading-relaxed">${esc(comment)}</p>
+        </div>` : ''}
+        <ul class="divide-y divide-gray-50 border-t border-gray-50">
           ${t.members.map(m => `
             <li class="flex items-center gap-2 px-4 py-2.5">
               <span class="w-4 text-center text-xs font-bold ${m.isLeader ? 'text-amber-400' : 'text-gray-200'}">${m.isLeader ? '★' : '·'}</span>
               <span class="flex-1 text-sm ${m.isLeader ? 'font-bold text-gray-800' : 'text-gray-700'}">
                 ${esc(m.name)}${m.role === 'ゲスト' && m.referrer ? `<span class="text-xs text-gray-400 ml-1">(紹介: ${esc(m.referrer)})</span>` : ''}
               </span>
-              <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${ROLE_BADGE[m.role] || ''}">${esc(m.role)}</span>
+              <div class="flex items-center gap-1.5">
+                ${m.gyoshu ? gyoshuBadge(m.gyoshu) : ''}
+                <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${ROLE_BADGE[m.role] || ''}">${esc(m.role)}</span>
+              </div>
             </li>`).join('')}
         </ul>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
 
   function renderResults() {
@@ -700,11 +825,11 @@
   // Export
   // ================================================================
   function exportCSV() {
-    const rows = [['ラウンド', 'テーブル番号', '席順', '名前', '区分', 'テーブルリーダー', '紹介者']];
+    const rows = [['ラウンド', 'テーブル番号', '席順', '名前', '区分', 'テーブルリーダー', '業種', '紹介者']];
     for (const [rn, tables] of [[1, state.round1], [2, state.round2]]) {
       for (const t of tables) {
         t.members.forEach((p, i) =>
-          rows.push([rn, t.id, i + 1, p.name, p.role, p.isLeader ? '○' : '', p.referrer || '']));
+          rows.push([rn, t.id, i + 1, p.name, p.role, p.isLeader ? '○' : '', p.gyoshu || '', p.referrer || '']));
       }
     }
     const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
@@ -752,6 +877,14 @@
     document.getElementById('round-info').textContent =
       `${tables.length}テーブル / ${tables.reduce((s, t) => s + t.members.length, 0)}名配置`;
     renderTables(tables);
+  }
+
+  function toggleIdeas() {
+    const body = document.getElementById('ideas-body');
+    const arrow = document.getElementById('ideas-arrow');
+    const hidden = body.classList.toggle('hidden');
+    arrow.textContent = hidden ? '▶' : '▼';
+    if (!hidden) body.className = 'grid grid-cols-1 sm:grid-cols-2 gap-4';
   }
 
   function toggleHint() {
