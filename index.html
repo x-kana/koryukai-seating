@@ -216,39 +216,6 @@
       <!-- Table grid -->
       <div id="table-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
 
-      <!-- Ideas panel -->
-      <div class="mt-8 border-t border-gray-100 pt-6">
-        <button onclick="toggleIdeas()" class="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-gray-800 mb-4">
-          <span id="ideas-arrow" class="text-gray-400 transition-transform duration-200">▶</span>
-          場を盛り上げるアイデア
-        </button>
-        <div id="ideas-body" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div class="bg-amber-50 border border-amber-100 rounded-xl p-4">
-            <div class="font-semibold text-amber-800 text-sm mb-1">名刺交換ミッション</div>
-            <p class="text-xs text-amber-700 leading-relaxed">第1ラウンド開始時に「このラウンドで絶対フォローしたい人を1人見つける」をミッションとして宣言。終了時に全員が名前を挙げる。第2ラウンドへの期待感が高まります。</p>
-          </div>
-          <div class="bg-sky-50 border border-sky-100 rounded-xl p-4">
-            <div class="font-semibold text-sky-800 text-sm mb-1">テーブルミッションカード</div>
-            <p class="text-xs text-sky-700 leading-relaxed">各テーブルに1枚カードを置き「5分以内に全員の業種を把握して、2人の間にある共通点を1つ見つけよう」というチャレンジを出す。会話の糸口になります。</p>
-          </div>
-          <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
-            <div class="font-semibold text-emerald-800 text-sm mb-1">マッチングメモシート</div>
-            <p class="text-xs text-emerald-700 leading-relaxed">A5 1枚の「今日の出会いメモ」を配布。「名前・業種・話した内容・フォローしたいこと」を記入欄として用意。帰宅後の行動につながります。</p>
-          </div>
-          <div class="bg-violet-50 border border-violet-100 rounded-xl p-4">
-            <div class="font-semibold text-violet-800 text-sm mb-1">自己紹介カード（席置き）</div>
-            <p class="text-xs text-violet-700 leading-relaxed">名前・業種に加えて「今探していること」「提供できること」を書いた小カードを席に置く。着席直後から会話が始まりやすくなります。</p>
-          </div>
-          <div class="bg-rose-50 border border-rose-100 rounded-xl p-4">
-            <div class="font-semibold text-rose-800 text-sm mb-1">ラウンド間 30 秒タイム</div>
-            <p class="text-xs text-rose-700 leading-relaxed">席替えの前に「第1ラウンドで一番印象に残った話を30秒でシェアして！」と促す。第2ラウンドへの橋渡しになり、場の熱量が下がりません。</p>
-          </div>
-          <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
-            <div class="font-semibold text-indigo-800 text-sm mb-1">業種タグ名札</div>
-            <p class="text-xs text-indigo-700 leading-relaxed">名札に業種を大きく印刷（例: 「IT・田中」）。遠くからでも一目で分かり、席移動のタイミングで声をかけやすくなります。</p>
-          </div>
-        </div>
-      </div>
     </div>
 
   </main>
@@ -875,14 +842,6 @@
     document.getElementById('round-info').textContent =
       `${tables.length}テーブル / ${tables.reduce((s, t) => s + t.members.length, 0)}名配置`;
     renderTables(tables);
-  }
-
-  function toggleIdeas() {
-    const body = document.getElementById('ideas-body');
-    const arrow = document.getElementById('ideas-arrow');
-    const hidden = body.classList.toggle('hidden');
-    arrow.textContent = hidden ? '▶' : '▼';
-    if (!hidden) body.className = 'grid grid-cols-1 sm:grid-cols-2 gap-4';
   }
 
   function toggleHint() {
