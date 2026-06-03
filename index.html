@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>席割り自動生成</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-gray-200 sticky top-0 z-10">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white text-sm font-bold">席</div>
+        <h1 class="font-bold text-gray-800">席割り自動生成</h1>
+        <span class="text-xs text-gray-400">MAX 160席 / 1テーブル8名</span>
+      </div>
+      <div id="step-indicator" class="flex items-center gap-2 text-sm">
+        <span class="flex items-center gap-1.5">
+          <span id="step-circle-1" class="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center font-bold">1</span>
+          <span class="text-gray-600 hidden sm:inline text-xs">アップロード</span>
+        </span>
+        <span class="text-gray-300 text-xs">›</span>
+        <span class="flex items-center gap-1.5">
+          <span id="step-circle-2" class="w-6 h-6 rounded-full bg-gray-200 text-gray-500 text-xs flex items-center justify-center font-bold">2</span>
+          <span class="text-gray-400 hidden sm:inline text-xs">確認</span>
+        </span>
+        <span class="text-gray-300 text-xs">›</span>
+        <span class="flex items-center gap-1.5">
+          <span id="step-circle-3" class="w-6 h-6 rounded-full bg-gray-200 text-gray-500 text-xs flex items-center justify-center font-bold">3</span>
+          <span class="text-gray-400 hidden sm:inline text-xs">結果</span>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+
+    <!-- ========== Step 1: Upload ========== -->
+    <div id="view-1" class="view">
+      <div class="max-w-lg mx-auto">
+        <h2 class="text-xl font-bold text-gray-800 mb-1">名簿CSVをアップロード</h2>
+        <p class="text-gray-500 text-sm mb-6">CSVファイルを読み込んで席割りを自動生成します</p>
+
+        <!-- Drop zone -->
+        <div id="drop-zone"
+             class="border-2 border-dashed border-gray-300 rounded-2xl p-12 text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-colors"
+             onclick="document.getElementById('file-input').click()">
+          <div class="text-5xl mb-3">📋</div>
+          <p class="font-medium text-gray-700 mb-1">ドラッグ＆ドロップ</p>
+          <p class="text-sm text-gray-400 mb-4">または</p>
+          <span class="px-5 py-2.5 bg-indigo-600 text-white text-sm rounded-lg font-medium">ファイルを選択</span>
+          <input id="file-input" type="file" accept=".csv" class="hidden">
+        </div>
+
+        <!-- Format hint -->
+        <div class="mt-5 bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <button onclick="toggleHint()" class="flex items-center justify-between w-full px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <span>対応CSVフォーマット（2種類）</span>
+            <span id="hint-arrow" class="text-gray-400 transition-transform duration-200">▼</span>
+          </button>
+          <div id="hint-body" class="hidden px-4 pb-4 border-t border-gray-100 space-y-4">
+
+            <!-- Format A: 実際の名簿 -->
+            <div class="mt-3">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded">A</span>
+                <span class="text-xs font-semibold text-gray-700">守成クラブ等の実際の名簿CSV（そのまま読み込み可）</span>
+              </div>
+              <p class="text-xs text-gray-500 mb-1">以下の列名を含むCSVを自動認識します：</p>
+              <code class="block bg-gray-50 rounded-lg p-2 text-xs text-gray-700 font-mono">... TL ... 資格 ... 氏名 ... 会場名 ... 紹介者 ...</code>
+              <table class="mt-2 text-xs w-full border-collapse">
+                <tbody class="text-gray-600 divide-y divide-gray-50">
+                  <tr><td class="py-1.5 pr-3 font-medium w-20">TL列</td><td class="py-1.5">● のみテーブルリーダーとして認識（● の数＝テーブル数）</td></tr>
+                  <tr><td class="py-1.5 pr-3 font-medium">資格列</td><td class="py-1.5">正会員・準会員・世話人・ゲストをそのまま使用。代表/副代表/会計/事務局は世話人として扱います</td></tr>
+                  <tr><td class="py-1.5 pr-3 font-medium">会場名列</td><td class="py-1.5">最多会場名をホーム会場と判定。それ以外の会場の正会員・準会員・世話人は「他会場所属」として扱います</td></tr>
+                  <tr><td class="py-1.5 pr-3 font-medium">紹介者列</td><td class="py-1.5">資格がゲストの行のみ使用</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Format B: シンプル -->
+            <div class="border-t border-gray-100 pt-3">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-bold rounded">B</span>
+                <span class="text-xs font-semibold text-gray-700">シンプル形式（4列）</span>
+              </div>
+              <code class="block bg-gray-50 rounded-lg p-2 text-xs text-gray-700 font-mono">名前,区分,テーブルリーダー,紹介者</code>
+              <p class="text-xs text-gray-500 mt-1">区分: 世話人 / 正会員 / 準会員 / ゲスト / 他会場所属　／　テーブルリーダー: ○ または空欄</p>
+            </div>
+
+            <div class="bg-blue-50 rounded-lg p-3 text-xs text-blue-700">
+              <strong>共通ルール:</strong> 各テーブルに世話人1名以上・TLリーダー1名（席替えで固定）・ゲストは紹介者と同テーブル
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 text-center">
+          <button onclick="downloadSampleCSV()" class="text-sm text-indigo-600 hover:text-indigo-800 underline underline-offset-2">
+            サンプルCSVをダウンロード（24名・3テーブル）
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== Step 2: Validate ========== -->
+    <div id="view-2" class="view hidden">
+      <!-- Detected format badge -->
+      <div id="format-badge" class="hidden mb-4 text-xs text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2"></div>
+
+      <!-- Summary stats -->
+      <div id="summary-stats" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5"></div>
+
+      <!-- Errors -->
+      <div id="error-section" class="hidden mb-5">
+        <div class="bg-red-50 border border-red-200 rounded-xl p-4">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-red-500 font-bold text-lg">⚠</span>
+            <span class="font-semibold text-red-700">入力エラーがあります</span>
+          </div>
+          <ul id="error-list" class="text-sm text-red-600 space-y-1 list-disc list-inside ml-1"></ul>
+        </div>
+      </div>
+
+      <!-- Warnings -->
+      <div id="warning-section" class="hidden mb-5">
+        <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-yellow-500 font-bold text-lg">⚠</span>
+            <span class="font-semibold text-yellow-700">注意（実行は可能です）</span>
+          </div>
+          <ul id="warning-list" class="text-sm text-yellow-700 space-y-1 list-disc list-inside ml-1"></ul>
+        </div>
+      </div>
+
+      <!-- OK -->
+      <div id="ok-section" class="hidden mb-5">
+        <div class="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-2">
+          <span class="text-green-500 text-xl">✓</span>
+          <span class="font-medium text-green-700">バリデーション通過。席割りを実行できます。</span>
+        </div>
+      </div>
+
+      <!-- Participant table -->
+      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden mb-5">
+        <div class="px-4 py-3 border-b border-gray-100 text-sm font-medium text-gray-700">参加者一覧</div>
+        <div class="overflow-y-auto" style="max-height: 320px;">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 sticky top-0">
+              <tr class="text-left text-gray-500 text-xs uppercase tracking-wide border-b border-gray-100">
+                <th class="px-4 py-2.5 font-medium w-10">#</th>
+                <th class="px-4 py-2.5 font-medium">名前</th>
+                <th class="px-4 py-2.5 font-medium">区分</th>
+                <th class="px-4 py-2.5 font-medium text-center w-16">リーダー</th>
+                <th class="px-4 py-2.5 font-medium">紹介者</th>
+              </tr>
+            </thead>
+            <tbody id="participant-tbody" class="divide-y divide-gray-50"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <button onclick="showStep(1)" class="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+          ← 戻る
+        </button>
+        <button id="run-btn" onclick="runAssignment()"
+                class="px-6 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+          席割りを実行 →
+        </button>
+      </div>
+    </div>
+
+    <!-- ========== Step 3: Results ========== -->
+    <div id="view-3" class="view hidden">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <!-- Tabs -->
+        <div class="flex bg-white border border-gray-200 rounded-xl p-1 gap-1">
+          <button id="tab-btn-1" onclick="switchTab(1)"
+                  class="px-4 py-2 rounded-lg text-sm font-semibold transition-colors bg-indigo-600 text-white">
+            第1ラウンド
+          </button>
+          <button id="tab-btn-2" onclick="switchTab(2)"
+                  class="px-4 py-2 rounded-lg text-sm font-semibold transition-colors text-gray-600 hover:bg-gray-50">
+            第2ラウンド
+          </button>
+        </div>
+
+        <!-- Diversity badge -->
+        <div id="diversity-badge" class="hidden bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm px-3 py-1.5 rounded-lg font-medium"></div>
+
+        <!-- Actions -->
+        <div class="flex gap-2 flex-wrap">
+          <button onclick="reshuffle()"
+                  class="px-3 py-2 text-sm border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors">
+            🔀 再シャッフル
+          </button>
+          <button onclick="exportCSV()"
+                  class="px-3 py-2 text-sm bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">
+            📥 CSVエクスポート
+          </button>
+          <button onclick="reupload()"
+                  class="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+            ↩ 再アップロード
+          </button>
+        </div>
+      </div>
+
+      <!-- Table count info -->
+      <div id="round-info" class="text-xs text-gray-400 mb-4"></div>
+
+      <!-- Table grid -->
+      <div id="table-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+    </div>
+
+  </main>
+
+  <script>
+  // ================================================================
+  // Constants
+  // ================================================================
+  const VALID_ROLES = ['世話人', '正会員', '準会員', 'ゲスト', '他会場所属'];
+
+  const ROLE_BADGE = {
+    '世話人':    'bg-blue-100 text-blue-700',
+    '正会員':    'bg-green-100 text-green-700',
+    '準会員':    'bg-yellow-100 text-yellow-700',
+    'ゲスト':    'bg-purple-100 text-purple-700',
+    '他会場所属': 'bg-gray-100 text-gray-600',
+  };
+
+  const ROLE_WEIGHT = { '正会員': 3, '準会員': 2, '他会場所属': 1, '世話人': 0, 'ゲスト': 0 };
+
+  const SAMPLE_CSV = `名前,区分,テーブルリーダー,紹介者
+田中 花子,正会員,○,
+鈴木 一郎,正会員,○,
+佐藤 美穂,正会員,○,
+山田 太郎,世話人,,
+伊藤 次郎,世話人,,
+渡辺 三郎,世話人,,
+中村 さくら,正会員,,
+小林 健太,正会員,,
+加藤 麻衣,正会員,,
+吉田 大輔,準会員,,
+田中 純子,準会員,,
+鈴木 浩二,準会員,,
+山本 恵子,準会員,,
+中島 隆,準会員,,
+高橋 知子,準会員,,
+ゲスト A,ゲスト,,田中 花子
+ゲスト B,ゲスト,,鈴木 一郎
+ゲスト C,ゲスト,,佐藤 美穂
+木村 誠,他会場所属,,
+阿部 雅子,他会場所属,,
+松本 直樹,他会場所属,,
+岡田 幸子,他会場所属,,
+橋本 守,他会場所属,,
+藤田 真由美,他会場所属,,`;
+
+  // ================================================================
+  // State
+  // ================================================================
+  const state = { step: 1, persons: [], errors: [], round1: [], round2: [], activeTab: 1 };
+
+  // ================================================================
+  // CSV Parser
+  // ================================================================
+  function parseCSV(text) {
+    text = text.replace(/^﻿/, '');
+    const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+    return lines.filter(l => l.trim()).map(parseCSVRow);
+  }
+
+  function parseCSVRow(line) {
+    const fields = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') {
+        if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
+        else inQ = !inQ;
+      } else if (c === ',' && !inQ) { fields.push(cur.trim()); cur = ''; }
+      else cur += c;
+    }
+    fields.push(cur.trim());
+    return fields;
+  }
+
+  // ================================================================
+  // Validation — 2フォーマット対応
+  // ================================================================
+
+  // 守成クラブ等の実際の名簿CSV（氏名/TL/資格/会場名/紹介者 列を持つ）の役職マッピング
+  const REIKAI_ROLE_MAP = {
+    '世話人': '世話人', 'ゲスト': 'ゲスト',
+    '正会員': '正会員', '準会員': '準会員',
+    '代表': '世話人', '副代表': '世話人',
+    '会計': '世話人', '事務局': '世話人', '理事長': '正会員',
+  };
+
+  function validatePersons(rows) {
+    const errors = [], persons = [];
+    if (rows.length < 2) { errors.push('CSVに参加者が1人以上必要です'); return { persons, errors }; }
+
+    const hdr = rows[0].map(s => s.trim());
+
+    // フォーマット自動判定
+    const isReikai = hdr.includes('氏名') && hdr.includes('TL') && hdr.includes('資格');
+    const isSimple = hdr.includes('名前') && hdr.includes('区分') && hdr.includes('テーブルリーダー');
+
+    if (!isReikai && !isSimple) {
+      errors.push('ヘッダーが認識できません。対応フォーマット: ① 名前/区分/テーブルリーダー/紹介者  ② 守成クラブ形式（氏名/TL/資格/会場名/紹介者 列を含むCSV）');
+      return { persons, errors };
+    }
+
+    // === 守成クラブ形式 ===
+    if (isReikai) {
+      const col = name => hdr.indexOf(name);
+      const iName = col('氏名'), iTL = col('TL'), iRole = col('資格');
+      const iRef = col('紹介者'), iVenue = col('会場名');
+
+      // ホーム会場を最多会場名で自動検出
+      const venueCnt = {};
+      for (const r of rows.slice(1)) {
+        const v = (r[iVenue] || '').trim();
+        if (v && v !== '-') venueCnt[v] = (venueCnt[v] || 0) + 1;
+      }
+      const homeVenue = Object.entries(venueCnt).sort((a,b) => b[1]-a[1])[0]?.[0] || '';
+      state.detectedFormat = `守成クラブ形式（ホーム会場: ${homeVenue}）`;
+
+      const nameSet = new Set();
+      for (const r of rows.slice(1)) {
+        const name = (r[iName] || '').trim();
+        if (!name) continue;
+        if (nameSet.has(name)) errors.push(`名前「${name}」が重複しています`);
+        nameSet.add(name);
+
+        const rawRole = (r[iRole] || '').trim();
+        const venue   = (r[iVenue] || '').trim();
+        const tlVal   = (r[iTL]    || '').trim();
+        const ref     = (r[iRef]   || '').trim();
+
+        // isLeader: TL=● のみ（●鬼瓦等の特殊値も含む場合は includes('●') で対応）
+        const isLeader = tlVal === '●' || tlVal.startsWith('●');
+
+        // 役職マッピング
+        let role = REIKAI_ROLE_MAP[rawRole] || '正会員';
+        // 他会場 → 他会場所属（ゲストは除外、他会場の世話人も他会場所属として扱う）
+        if (homeVenue && venue && venue !== '-' && venue !== homeVenue
+            && role !== 'ゲスト') {
+          role = '他会場所属';
+        }
+
+        const isHomeVenue = !homeVenue || !venue || venue === '-' || venue === homeVenue;
+        const fixedTable = (rawRole === '代表' && isHomeVenue) ? 3 : null;
+        persons.push({
+          name,
+          role,
+          isLeader,
+          referrer: (rawRole === 'ゲスト' && ref) ? ref : null,
+          fixedTable,
+          _rawRole: rawRole,
+          _venue: venue,
+        });
+      }
+
+    // === シンプル形式 ===
+    } else {
+      state.detectedFormat = 'シンプル形式';
+      const dataRows = rows.slice(1);
+      if (dataRows.length > 160) errors.push(`参加者は最大160名です（現在: ${dataRows.length}名）`);
+
+      const nameSet = new Set();
+      for (let i = 0; i < dataRows.length; i++) {
+        const r = dataRows[i], rn = i + 2;
+        const name = (r[0] || '').trim();
+        const role = (r[1] || '').trim();
+        const ldr  = (r[2] || '').trim();
+        const ref  = (r[3] || '').trim();
+
+        if (!name) { errors.push(`${rn}行目: 名前が空です`); continue; }
+        if (nameSet.has(name)) errors.push(`${rn}行目: 名前「${name}」が重複しています`);
+        nameSet.add(name);
+
+        if (!VALID_ROLES.includes(role))
+          errors.push(`${rn}行目: 区分「${role}」が不正です（${VALID_ROLES.join(' / ')}のいずれか）`);
+
+        const isLeader = ldr === '○';
+        if (isLeader && role !== '正会員')
+          errors.push(`${rn}行目: テーブルリーダー「○」は正会員のみ設定できます（「${name}」は${role}）`);
+        if (ref && role !== 'ゲスト')
+          errors.push(`${rn}行目: 紹介者はゲスト行にのみ記入できます`);
+        if (role === 'ゲスト' && !ref)
+          errors.push(`${rn}行目: ゲスト「${name}」に紹介者が未記入です`);
+
+        persons.push({ name, role, isLeader, referrer: ref || null });
+      }
+    }
+
+    // === 共通制約チェック ===
+    if (persons.length > 160) errors.push(`参加者は最大160名です（現在: ${persons.length}名）`);
+
+    const nameMap = Object.fromEntries(persons.map(p => [p.name, p]));
+    for (const p of persons) {
+      if (p.role === 'ゲスト' && p.referrer) {
+        if (!nameMap[p.referrer])
+          errors.push(`ゲスト「${p.name}」の紹介者「${p.referrer}」が名簿に存在しません`);
+        else if (nameMap[p.referrer].role === 'ゲスト')
+          errors.push(`ゲスト「${p.name}」の紹介者「${p.referrer}」もゲストです（紹介は1段階のみ）`);
+      }
+    }
+
+    const T = persons.filter(p => p.isLeader).length;
+    if (T < 1 || T > 20)
+      errors.push(`テーブルリーダーの数は1〜20人必要です（現在: ${T}人）`);
+
+    const warnings = [];
+    if (T > 0) {
+      const sewaCount = persons.filter(p => p.role === '世話人').length;
+      if (sewaCount < T)
+        warnings.push(`世話人(${sewaCount}人)がテーブル数(${T})より少ないです。世話人不在のテーブルが生じる可能性があります`);
+      if (persons.length > T * 8)
+        errors.push(`参加者(${persons.length}人)がテーブル容量(${T}×8=${T * 8}席)を超えています`);
+      const fixedT3 = persons.find(p => p.fixedTable === 3);
+      if (fixedT3 && T < 3)
+        warnings.push(`代表「${fixedT3.name}」をテーブル3に固定しますが、テーブル数が${T}のためテーブル3が存在しません`);
+    }
+
+    return { persons, errors, warnings };
+  }
+
+  // ================================================================
+  // Algorithm — Utilities
+  // ================================================================
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function leastFull(tables) {
+    return tables.reduce((a, b) => a.members.length <= b.members.length ? a : b);
+  }
+
+  function findTable(tables, personName) {
+    return tables.find(t => t.members.some(m => m.name === personName)) || null;
+  }
+
+  function imbalanceScore(tables, target, person) {
+    let score = 0;
+    for (const role of VALID_ROLES) {
+      const counts = tables.map(t => {
+        const n = t.members.filter(m => m.role === role).length;
+        return t === target && person.role === role ? n + 1 : n;
+      });
+      const mean = counts.reduce((s, c) => s + c, 0) / counts.length;
+      score += counts.reduce((s, c) => s + (c - mean) ** 2, 0);
+    }
+    return score;
+  }
+
+  function bestByImbalance(tables, person) {
+    const eligible = tables.filter(t => t.members.length < 8);
+    if (!eligible.length) return leastFull(tables);
+    return eligible.reduce((best, t) =>
+      imbalanceScore(tables, t, person) < imbalanceScore(tables, best, person) ? t : best
+    );
+  }
+
+  function buildNeighborMap(tables) {
+    const map = {};
+    for (const t of tables) {
+      for (const p of t.members) {
+        if (!map[p.name]) map[p.name] = new Set();
+        for (const q of t.members) if (q.name !== p.name) map[p.name].add(q.name);
+      }
+    }
+    return map;
+  }
+
+  function overlapScore(table, person, nbMap) {
+    const prior = nbMap[person.name] || new Set();
+    return table.members.filter(m => prior.has(m.name)).length;
+  }
+
+  function bestByDiversity(tables, person, nbMap) {
+    const eligible = tables.filter(t => t.members.length < 8);
+    if (!eligible.length) return leastFull(tables);
+    const OW = 2.0, IW = 1.0;
+    return eligible.reduce((best, t) => {
+      const sT = overlapScore(t, person, nbMap) * OW + imbalanceScore(tables, t, person) * IW;
+      const sB = overlapScore(best, person, nbMap) * OW + imbalanceScore(tables, best, person) * IW;
+      return sT < sB ? t : best;
+    });
+  }
+
+  // ================================================================
+  // Algorithm — Round 1
+  // ================================================================
+  function assignRound1(persons) {
+    // 固定テーブル指定のリーダーを指定位置に並び替え
+    let leaders = persons.filter(p => p.isLeader);
+    const fixedLeader = leaders.find(p => p.fixedTable);
+    if (fixedLeader && fixedLeader.fixedTable <= leaders.length) {
+      const idx = leaders.indexOf(fixedLeader);
+      const targetIdx = fixedLeader.fixedTable - 1;
+      if (idx !== targetIdx) {
+        leaders = [...leaders];
+        leaders.splice(idx, 1);
+        leaders.splice(targetIdx, 0, fixedLeader);
+      }
+    }
+    const tables = leaders.map((l, i) => ({ id: i + 1, leader: l, members: [l] }));
+
+    // 固定テーブル指定の非リーダーを先に配置
+    for (const fp of persons.filter(p => p.fixedTable && !p.isLeader)) {
+      const t = tables.find(t => t.id === fp.fixedTable);
+      if (t && t.members.length < 8) t.members.push(fp);
+    }
+
+    // Phase 1: 世話人（シャッフル後、1人/テーブルを保証。固定済み・リーダーは除く）
+    const sewa = shuffle(persons.filter(p => p.role === '世話人' && !p.isLeader && !p.fixedTable));
+    for (const t of tables) { if (sewa.length) t.members.push(sewa.shift()); }
+    for (const s of sewa)   leastFull(tables).members.push(s);
+
+    // Phase 2: 紹介者がすでに配置済みのゲストのみ配置（未解決は deferred）
+    const guests = persons.filter(p => p.role === 'ゲスト');
+    const pendingGuests = [];
+    for (const g of guests) {
+      const rt = findTable(tables, g.referrer);
+      if (rt && rt.members.length < 8) rt.members.push(g);
+      else pendingGuests.push(g);
+    }
+
+    // Phase 3: 残り（役割比率バランス。固定済みは除く）
+    const others = persons.filter(p => !p.isLeader && p.role !== '世話人' && p.role !== 'ゲスト' && !p.fixedTable);
+    for (const p of [...others].sort((a, b) => ROLE_WEIGHT[b.role] - ROLE_WEIGHT[a.role]))
+      bestByImbalance(tables, p).members.push(p);
+
+    // Phase 4: 紹介者が Phase 3 で配置されたゲストを解決
+    for (const g of pendingGuests) {
+      const rt = findTable(tables, g.referrer);
+      const t  = (rt && rt.members.length < 8) ? rt : tables.find(t => t.members.length < 8);
+      if (t) t.members.push(g);
+    }
+
+    return tables;
+  }
+
+  // ================================================================
+  // Algorithm — Round 2
+  // ================================================================
+  function assignRound2(persons, r1Tables) {
+    const nbMap  = buildNeighborMap(r1Tables);
+    const tables = r1Tables.map(t => ({ id: t.id, leader: t.leader, members: [t.leader] }));
+
+    // 固定テーブル指定の非リーダーを先に配置（第2ラウンドも同じテーブルに固定）
+    for (const fp of persons.filter(p => p.fixedTable && !p.isLeader)) {
+      const t = tables.find(t => t.id === fp.fixedTable);
+      if (t && t.members.length < 8) t.members.push(fp);
+    }
+
+    // Phase 1: 世話人（多様性優先。固定済み・リーダーは除く）
+    const sewa = shuffle(persons.filter(p => p.role === '世話人' && !p.isLeader && !p.fixedTable));
+    for (const t of tables) {
+      if (!sewa.length) break;
+      const best = sewa.reduce((b, p) => overlapScore(t, p, nbMap) < overlapScore(t, b, nbMap) ? p : b);
+      t.members.push(best);
+      sewa.splice(sewa.indexOf(best), 1);
+    }
+    for (const s of sewa) bestByDiversity(tables, s, nbMap).members.push(s);
+
+    // Phase 2: 紹介者がすでに配置済みのゲストのみ配置（未解決は deferred）
+    const guests = persons.filter(p => p.role === 'ゲスト');
+    const pendingGuests = [];
+    for (const g of guests) {
+      const rt = findTable(tables, g.referrer);
+      if (rt && rt.members.length < 8) rt.members.push(g);
+      else pendingGuests.push(g);
+    }
+
+    // Phase 3: 残り（多様性 + 役割バランス。固定済みは除く）
+    const others = persons.filter(p => !p.isLeader && p.role !== '世話人' && p.role !== 'ゲスト' && !p.fixedTable);
+    for (const p of others) bestByDiversity(tables, p, nbMap).members.push(p);
+
+    // Phase 4: 未配置ゲストの解決
+    for (const g of pendingGuests) {
+      const rt = findTable(tables, g.referrer);
+      const t  = (rt && rt.members.length < 8) ? rt : tables.find(t => t.members.length < 8);
+      if (t) t.members.push(g);
+    }
+
+    return tables;
+  }
+
+  // ================================================================
+  // Metrics
+  // ================================================================
+  function calcDiversityScore(r1, r2) {
+    let newCount = 0, total = 0;
+    for (const t2 of r2) {
+      const t1names = new Set(r1.find(t => t.id === t2.id).members.map(m => m.name));
+      for (const m of t2.members) {
+        if (!m.isLeader) { total++; if (!t1names.has(m.name)) newCount++; }
+      }
+    }
+    return total > 0 ? Math.round(newCount / total * 100) : 0;
+  }
+
+  // ================================================================
+  // Rendering
+  // ================================================================
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function renderSummary(persons) {
+    const T = persons.filter(p => p.isLeader).length;
+    const c = {};
+    for (const r of VALID_ROLES) c[r] = persons.filter(p => p.role === r).length;
+    const stats = [
+      { label: '参加者', value: `${persons.length}名`, sub: `${T}テーブル` },
+      { label: '世話人', value: `${c['世話人']}名`, sub: '' },
+      { label: '正会員（リーダー含）', value: `${c['正会員']}名`, sub: `うちリーダー ${T}名` },
+      { label: '準会員 / 他会場 / ゲスト', value: `${c['準会員'] + c['他会場所属'] + c['ゲスト']}名`,
+        sub: `準 ${c['準会員']} 他 ${c['他会場所属']} ゲスト ${c['ゲスト']}` },
+    ];
+    document.getElementById('summary-stats').innerHTML = stats.map(s => `
+      <div class="bg-white rounded-xl border border-gray-200 p-4">
+        <div class="text-2xl font-bold text-gray-800">${s.value}</div>
+        <div class="text-xs font-semibold text-gray-600 mt-0.5">${s.label}</div>
+        ${s.sub ? `<div class="text-xs text-gray-400 mt-0.5">${s.sub}</div>` : ''}
+      </div>`).join('');
+  }
+
+  function renderParticipantTable(persons) {
+    document.getElementById('participant-tbody').innerHTML = persons.map((p, i) => `
+      <tr class="hover:bg-gray-50">
+        <td class="px-4 py-2 text-xs text-gray-400">${i + 1}</td>
+        <td class="px-4 py-2 text-sm font-medium text-gray-800">${esc(p.name)}</td>
+        <td class="px-4 py-2">
+          <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${ROLE_BADGE[p.role] || 'bg-gray-100 text-gray-600'}">${esc(p.role)}</span>
+        </td>
+        <td class="px-4 py-2 text-center text-amber-400 font-bold text-sm">${p.isLeader ? '★' : ''}</td>
+        <td class="px-4 py-2 text-xs text-gray-500">${p.referrer ? esc(p.referrer) : ''}</td>
+      </tr>`).join('');
+  }
+
+  function renderTables(tables) {
+    document.getElementById('table-grid').innerHTML = tables.map(t => `
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="flex items-center justify-between px-4 py-3 bg-indigo-50 border-b border-indigo-100">
+          <div class="flex items-center gap-2">
+            <span class="w-7 h-7 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center">${t.id}</span>
+            <span class="font-bold text-gray-800 text-sm">テーブル ${t.id}</span>
+          </div>
+          <span class="text-xs text-gray-400">${t.members.length} / 8 名</span>
+        </div>
+        <ul class="divide-y divide-gray-50">
+          ${t.members.map(m => `
+            <li class="flex items-center gap-2 px-4 py-2.5">
+              <span class="w-4 text-center text-xs font-bold ${m.isLeader ? 'text-amber-400' : 'text-gray-200'}">${m.isLeader ? '★' : '·'}</span>
+              <span class="flex-1 text-sm ${m.isLeader ? 'font-bold text-gray-800' : 'text-gray-700'}">
+                ${esc(m.name)}${m.role === 'ゲスト' && m.referrer ? `<span class="text-xs text-gray-400 ml-1">(紹介: ${esc(m.referrer)})</span>` : ''}
+              </span>
+              <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${ROLE_BADGE[m.role] || ''}">${esc(m.role)}</span>
+            </li>`).join('')}
+        </ul>
+      </div>`).join('');
+  }
+
+  function renderResults() {
+    const score = calcDiversityScore(state.round1, state.round2);
+    const badge = document.getElementById('diversity-badge');
+    badge.textContent = `新しい隣人率 ${score}%（第2ラウンド）`;
+    badge.classList.remove('hidden');
+
+    const tables = state.activeTab === 1 ? state.round1 : state.round2;
+    document.getElementById('round-info').textContent =
+      `${tables.length}テーブル / ${tables.reduce((s, t) => s + t.members.length, 0)}名配置`;
+    renderTables(tables);
+  }
+
+  // ================================================================
+  // Export
+  // ================================================================
+  function exportCSV() {
+    const rows = [['ラウンド', 'テーブル番号', '席順', '名前', '区分', 'テーブルリーダー', '紹介者']];
+    for (const [rn, tables] of [[1, state.round1], [2, state.round2]]) {
+      for (const t of tables) {
+        t.members.forEach((p, i) =>
+          rows.push([rn, t.id, i + 1, p.name, p.role, p.isLeader ? '○' : '', p.referrer || '']));
+      }
+    }
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+    const a = Object.assign(document.createElement('a'), {
+      href: URL.createObjectURL(blob),
+      download: `席割り_${new Date().toLocaleDateString('ja-JP').replace(/\//g, '-')}.csv`
+    });
+    a.click();
+  }
+
+  function downloadSampleCSV() {
+    const blob = new Blob(['﻿' + SAMPLE_CSV], { type: 'text/csv;charset=utf-8' });
+    const a = Object.assign(document.createElement('a'), {
+      href: URL.createObjectURL(blob),
+      download: 'サンプル名簿.csv'
+    });
+    a.click();
+  }
+
+  // ================================================================
+  // Navigation & UI
+  // ================================================================
+  function showStep(n) {
+    document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+    document.getElementById(`view-${n}`).classList.remove('hidden');
+    state.step = n;
+    updateStepCircles(n);
+  }
+
+  function updateStepCircles(current) {
+    for (let i = 1; i <= 3; i++) {
+      const el = document.getElementById(`step-circle-${i}`);
+      if (i < current)       el.className = 'w-6 h-6 rounded-full bg-green-500 text-white text-xs flex items-center justify-center font-bold', el.textContent = '✓';
+      else if (i === current) el.className = 'w-6 h-6 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center font-bold', el.textContent = i;
+      else                    el.className = 'w-6 h-6 rounded-full bg-gray-200 text-gray-500 text-xs flex items-center justify-center font-bold', el.textContent = i;
+    }
+  }
+
+  function switchTab(n) {
+    state.activeTab = n;
+    document.getElementById('tab-btn-1').className = `px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${n === 1 ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`;
+    document.getElementById('tab-btn-2').className = `px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${n === 2 ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`;
+    const tables = n === 1 ? state.round1 : state.round2;
+    document.getElementById('round-info').textContent =
+      `${tables.length}テーブル / ${tables.reduce((s, t) => s + t.members.length, 0)}名配置`;
+    renderTables(tables);
+  }
+
+  function toggleHint() {
+    const body = document.getElementById('hint-body');
+    const arrow = document.getElementById('hint-arrow');
+    const hidden = body.classList.toggle('hidden');
+    arrow.style.transform = hidden ? '' : 'rotate(180deg)';
+  }
+
+  function processFile(file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const rows = parseCSV(e.target.result);
+        const { persons, errors, warnings } = validatePersons(rows);
+        state.persons  = persons;
+        state.errors   = errors;
+        state.warnings = warnings || [];
+
+        // フォーマット検出バッジ
+        const badge = document.getElementById('format-badge');
+        if (state.detectedFormat) {
+          badge.textContent = '📄 検出フォーマット: ' + state.detectedFormat;
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+
+        renderSummary(persons);
+        renderParticipantTable(persons);
+
+        // エラー表示
+        if (errors.length) {
+          document.getElementById('error-section').classList.remove('hidden');
+          document.getElementById('error-list').innerHTML = errors.map(e => `<li>${esc(e)}</li>`).join('');
+          document.getElementById('run-btn').disabled = true;
+        } else {
+          document.getElementById('error-section').classList.add('hidden');
+          document.getElementById('run-btn').disabled = false;
+        }
+
+        // 警告表示
+        if (state.warnings.length) {
+          document.getElementById('warning-section').classList.remove('hidden');
+          document.getElementById('warning-list').innerHTML = state.warnings.map(w => `<li>${esc(w)}</li>`).join('');
+        } else {
+          document.getElementById('warning-section').classList.add('hidden');
+        }
+
+        // OK表示（エラーなしの場合）
+        if (!errors.length) {
+          document.getElementById('ok-section').classList.remove('hidden');
+        } else {
+          document.getElementById('ok-section').classList.add('hidden');
+        }
+
+        showStep(2);
+      } catch (err) {
+        alert('ファイルの読み込みに失敗しました: ' + err.message);
+      }
+    };
+    reader.onerror = () => alert('ファイルの読み込みに失敗しました');
+    // Shift-JIS と UTF-8 を自動判定して読み込む
+    tryReadFile(file, reader);
+  }
+
+  function tryReadFile(file, reader) {
+    // まず UTF-8 で試み、文字化けしていたら Shift-JIS で再試行
+    const r1 = new FileReader();
+    r1.onload = e => {
+      const text = e.target.result;
+      // 文字化け判定: 置換文字 U+FFFD が含まれていたら Shift-JIS で再試行
+      if (text.includes('�')) {
+        const r2 = new FileReader();
+        r2.onload = e2 => reader.onload({ target: { result: e2.target.result } });
+        r2.onerror = reader.onerror;
+        r2.readAsText(file, 'Shift-JIS');
+      } else {
+        reader.onload({ target: { result: text } });
+      }
+    };
+    r1.onerror = reader.onerror;
+    r1.readAsText(file, 'UTF-8');
+  }
+
+  function runAssignment() {
+    try {
+      state.round1    = assignRound1(state.persons);
+      state.round2    = assignRound2(state.persons, state.round1);
+      state.activeTab = 1;
+      document.getElementById('tab-btn-1').className = 'px-4 py-2 rounded-lg text-sm font-semibold transition-colors bg-indigo-600 text-white';
+      document.getElementById('tab-btn-2').className = 'px-4 py-2 rounded-lg text-sm font-semibold transition-colors text-gray-600 hover:bg-gray-50';
+      renderResults();
+      showStep(3);
+    } catch (err) {
+      alert('席割りエラー: ' + err.message);
+    }
+  }
+
+  function reshuffle() {
+    try {
+      state.round1 = assignRound1(state.persons);
+      state.round2 = assignRound2(state.persons, state.round1);
+      renderResults();
+    } catch (err) {
+      alert('席割りエラー: ' + err.message);
+    }
+  }
+
+  function reupload() {
+    state.persons = [];
+    state.errors  = [];
+    state.round1  = [];
+    state.round2  = [];
+    document.getElementById('file-input').value = '';
+    showStep(1);
+  }
+
+  // ================================================================
+  // Event Listeners
+  // ================================================================
+  document.getElementById('file-input').addEventListener('change', e => {
+    if (e.target.files[0]) processFile(e.target.files[0]);
+  });
+
+  const dz = document.getElementById('drop-zone');
+  dz.addEventListener('dragover', e => {
+    e.preventDefault();
+    dz.classList.add('border-indigo-400', 'bg-indigo-50');
+  });
+  dz.addEventListener('dragleave', () => dz.classList.remove('border-indigo-400', 'bg-indigo-50'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault();
+    dz.classList.remove('border-indigo-400', 'bg-indigo-50');
+    const file = e.dataTransfer.files[0];
+    if (file) processFile(file);
+  });
+  </script>
+</body>
+</html>
