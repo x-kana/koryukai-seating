@@ -76,7 +76,7 @@
                   <tr><td class="py-1.5 pr-3 font-medium">資格列</td><td class="py-1.5">正会員・準会員・世話人・ゲストをそのまま使用。代表/副代表/会計/事務局は世話人として扱います</td></tr>
                   <tr><td class="py-1.5 pr-3 font-medium">会場名列</td><td class="py-1.5">最多会場名をホーム会場と判定。それ以外の会場の正会員・準会員・世話人は「他会場所属」として扱います</td></tr>
                   <tr><td class="py-1.5 pr-3 font-medium">紹介者列</td><td class="py-1.5">資格がゲストの行のみ使用</td></tr>
-                  <tr><td class="py-1.5 pr-3 font-medium">業種・職種列</td><td class="py-1.5">任意。記入するとビジネスマッチングを考慮した席配置とテーブルコメントが生成されます</td></tr>
+                  <tr><td class="py-1.5 pr-3 font-medium">業種・職種・業務内容列</td><td class="py-1.5">任意。記入するとビジネスマッチングを考慮した席配置とテーブルコメントが生成されます</td></tr>
                 </tbody>
               </table>
             </div>
@@ -366,7 +366,7 @@
       const col = name => hdr.indexOf(name);
       const iName = col('氏名'), iTL = col('TL'), iRole = col('資格');
       const iRef = col('紹介者'), iVenue = col('会場名');
-      const iGyoshu = col('業種') !== -1 ? col('業種') : col('職種');
+      const iGyoshu = col('業種') !== -1 ? col('業種') : col('職種') !== -1 ? col('職種') : col('業務内容');
 
       // ホーム会場を最多会場名で自動検出
       const venueCnt = {};
